@@ -15,10 +15,6 @@ let newPointClicked = 0;
 let trees;
 let appsscriptUrl = "https://script.google.com/macros/s/AKfycbwaXZv50yFgJ3HVUp2cdK0hTySWzfSIe6f6HTCZ4CHUI7RZ0rZ56laqSvxvaBeXLGzzrA/exec"
 
-// Load the layer for the first time
-reloadLayer()
-
-
 // Create a class for the control that will show the users where they clicked 
 // and allow them to add a tree type and send the results.
 L.Control.LastClick = L.Control.extend({
@@ -128,3 +124,6 @@ function reloadLayer(){
     
 }
 
+
+// Load the layer for the first time
+reloadLayer()
