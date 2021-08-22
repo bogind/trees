@@ -15,6 +15,67 @@ let newPointClicked = 0;
 let trees;
 let appsscriptUrl = "https://script.google.com/macros/s/AKfycbwaXZv50yFgJ3HVUp2cdK0hTySWzfSIe6f6HTCZ4CHUI7RZ0rZ56laqSvxvaBeXLGzzrA/exec"
 
+// define what happens when the map is clicked,
+// mainly the treeLocation is updated and the placeholder text changes
+map.on('click',function(e){
+    
+    newPointClicked = 1;        
+    if(document.getElementById("placeholder")){
+        document.getElementById("placeholder").innerText = `Last Clicked:\n\
+         Latitude: ${e.latlng.lat.toFixed(6)}, Longitude: ${e.latlng.lng.toFixed(6)}`
+    }
+    treeLocation = e.latlng;
+})
+
+// function to run when the send button is clicked
+function sendLocation(){
+    // if there was a new click on the map
+    // this prevents users from sending the same location multiple times
+    if(newPointClicked === 1){
+        // Add URL parameters to the base URL
+        url = appsscriptUrl + `?lat=${treeLocation.lat}&lon=${treeLocation.lng}`
+        // get the type text input
+        textInput = document.getElementById("treeType");
+        treeType = textInput.value;
+        // if the user added a type, add it to the url
+        if(treeType.length > 0){
+            url += `&type=${treeType}`;
+        }
+        // Post the request to the server with a HTTP POST request
+        fetch(url, {
+            method: 'POST'
+            })
+        // reset new point clicked and prompt user to select another point
+        newPointClicked = 0
+        document.getElementById("placeholder").innerText = "Tree Added,\nClick the map again to add another"
+    }
+}
+
+function reloadLayer(){
+    // Perform a HTTP GET request, which should return our GeoJson.
+    fetch(appsscriptUrl)
+    .then(response => response.json())
+    .then(data => {
+        // If the map has the trees layer, remove it.
+        if(map.hasLayer(trees)){
+            map.removeLayer(trees)
+        }
+        // Redefine the trees layer, and add to the map.
+        trees = L.geoJson(data,{
+            onEachFeature: function(feature, layer){
+                if (feature.properties && feature.properties.type) {
+                    layer.bindPopup("Tree Type: " +feature.properties.type);
+                }
+            }
+        })
+        map.addLayer(trees)
+    }) 
+}
+
+
+// Load the layer for the first time
+reloadLayer()
+
 // Create a class for the control that will show the users where they clicked 
 // and allow them to add a tree type and send the results.
 L.Control.LastClick = L.Control.extend({
@@ -60,70 +121,3 @@ L.control.lastClick = function(opts) {
     return new L.Control.LastClick(opts);
 }
 L.control.lastClick({ position: 'bottomright' }).addTo(map);
-
-// define what happens when the map is clicked,
-// mainly the treeLocation is updated and the placeholder text changes
-map.on('click',function(e){
-    if(newPointClicked === 0){
-        newPointClicked = 1;        
-    }
-    if(document.getElementById("placeholder")){
-        document.getElementById("placeholder").innerText = `Last Clicked:\n Latitude: ${e.latlng.lat.toFixed(6)}, Longitude: ${e.latlng.lng.toFixed(6)}`
-        
-    }
-    treeLocation = e.latlng;
-})
-
-// function to run when the send button is clicked
-function sendLocation(){
-    // if there was a new click on the map
-    // this prevents users from sending the same location mutiple times
-    if(newPointClicked === 1){
-        // get the type text input
-        textInput = document.getElementById("treeType");
-        treeType = textInput.value;
-        // cerate an object to send to the server
-        postData = {
-            "lat": treeLocation.lat,
-            "lon": treeLocation.lng,
-        };
-        // if the user added a type, add it to the data object
-        if(treeType.length > 0){
-            postData.type = treeType;
-        }
-        // Post the data object to the server with a HTTP POST request
-        fetch(appsscriptUrl, {
-            method: 'POST', 
-            body: JSON.stringify(postData),
-            })
-        // reset new point clicked and prompt user to select anothe point
-        newPointClicked = 0
-        document.getElementById("placeholder").innerText = "Tree Added,\nClick the map again to add another"
-    }
-}
-
-function reloadLayer(){
-    // Perform a HTTP GET request, which should return our GeoJson.
-    fetch(appsscriptUrl)
-    .then(response => response.json())
-    .then(data => {
-        // If the map has the trees layer, remove it.
-        if(map.hasLayer(trees)){
-            map.removeLayer(trees)
-        }
-        // Redefine the trees layer, and add to the map.
-        trees = L.geoJson(data,{
-            onEachFeature: function(feature, layer){
-                if (feature.properties && feature.properties.type) {
-                    layer.bindPopup("Tree Type: " +feature.properties.type);
-                }
-            }
-        })
-        map.addLayer(trees)
-    })
-    
-}
-
-
-// Load the layer for the first time
-reloadLayer()
