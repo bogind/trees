@@ -36,10 +36,11 @@ function doGet(e) {
 function doPost(e){
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
   var parameters = e.parameter;
+  
   var time = new Date();
   var type = parameters.type ? parameters.type : "unknown"
-  var lon = parameters.lon;
-  var lat = parameters.lat;
+  var lon = parameters["lon"];
+  var lat = parameters["lat"];
   sheet.appendRow([time,type,lon,lat,0]);
   return ContentService.createTextOutput(200)
 }
